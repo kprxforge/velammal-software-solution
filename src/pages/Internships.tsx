@@ -171,23 +171,34 @@ export default function Internships() {
 
   useEffect(() => {
     const fetchInternships = async () => {
-      // Try ordered fetch first, fall back to unordered if created_at column missing
-      let { data, error } = await supabase
-        .from('internships')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        // Level 1: Try with created_at ordering
+        let { data, error } = await supabase
+          .from('internships')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.warn('Retrying without order:', error.message);
-        const res = await supabase.from('internships').select('*');
-        data = res.data;
-      }
+        // Level 2: Fallback — no ordering
+        if (error || !data) {
+          console.warn('[Internships] Order failed, retrying plain:', error?.message);
+          const res = await supabase.from('internships').select('*');
+          data = res.data;
+          if (res.error) console.error('[Internships] Plain fetch error:', res.error.message, res.error.details);
+        }
 
-      if (data) {
-        // Show courses where active is true OR active is not set (undefined/null)
-        setInternships(data.filter((i: any) => i.active !== false));
+        console.log('[Internships] Raw data from Supabase:', data?.length ?? 0, data);
+
+        if (data && data.length > 0) {
+          // Show all courses — active true OR undefined/null; only hide explicitly false
+          const visible = data.filter((i: any) => i.active !== false);
+          console.log('[Internships] Visible courses after filter:', visible.length);
+          setInternships(visible.length > 0 ? visible : data); // if all filtered out, show all
+        }
+      } catch (err: any) {
+        console.error('[Internships] Unexpected fetch error:', err?.message);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
     
     fetchInternships();
