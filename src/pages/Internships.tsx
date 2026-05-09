@@ -171,9 +171,21 @@ export default function Internships() {
 
   useEffect(() => {
     const fetchInternships = async () => {
-      const { data } = await supabase.from('internships').select('*').order('createdAt', { ascending: false });
+      // Try ordered fetch first, fall back to unordered if created_at column missing
+      let { data, error } = await supabase
+        .from('internships')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('Retrying without order:', error.message);
+        const res = await supabase.from('internships').select('*');
+        data = res.data;
+      }
+
       if (data) {
-        setInternships(data.filter((i: any) => i.active));
+        // Show courses where active is true OR active is not set (undefined/null)
+        setInternships(data.filter((i: any) => i.active !== false));
       }
       setIsLoading(false);
     };
