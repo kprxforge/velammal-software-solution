@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Orbitron", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-neon-cyan: #00f0ff;
+  --color-neon-purple: #b026ff;
+  --color-dark-surface: rgba(10, 10, 15, 0.7);
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+}
+
+@layer base {
+  body {
+    @apply text-white antialiased overflow-x-hidden;
+    background-color: #050508;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-dark-surface backdrop-blur-xl border border-glass-border shadow-[0_4px_30px_rgba(0,0,0,0.1)];
+  }
+  
+  .glass-hover {
+    @apply transition-all duration-300 hover:border-neon-cyan/50 hover:shadow-[0_0_20px_rgba(0,240,255,0.2)];
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(0, 240, 255, 0.3);
+  }
+  
+  .text-glow-cyan {
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.7), 0 0 20px rgba(0, 240, 255, 0.5);
+  }
+  
+  .text-glow-purple {
+    text-shadow: 0 0 10px rgba(176, 38, 255, 0.7), 0 0 20px rgba(176, 38, 255, 0.5);
+  }
+}

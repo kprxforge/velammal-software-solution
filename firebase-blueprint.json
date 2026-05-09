@@ -1,0 +1,114 @@
+{
+  "entities": {
+    "SystemConfig": {
+      "title": "System Configuration",
+      "description": "Global settings for the platform including payment details.",
+      "type": "object",
+      "properties": {
+        "qrUrl": { "type": "string", "description": "URL to the active payment QR code image" },
+        "upiId": { "type": "string", "description": "UPI ID for manual payments" },
+        "qrActive": { "type": "boolean", "description": "Whether the QR code payment is currently enabled" }
+      }
+    },
+    "Internship": {
+      "title": "Internship Listing",
+      "description": "A catalog item for an available internship.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "domain": { "type": "string" },
+        "duration": { "type": "string" },
+        "fee": { "type": "number" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "iconName": { "type": "string" },
+        "color": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "Closed", "Closing Soon"] },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Project": {
+      "title": "Project Showcase",
+      "description": "A catalog item for an available project.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "tech": { "type": "array", "items": { "type": "string" } },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "InternshipApplication": {
+      "title": "Internship Application",
+      "description": "Student application for various internships.",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "college": { "type": "string" },
+        "degree": { "type": "string" },
+        "year": { "type": "string" },
+        "city": { "type": "string" },
+        "internshipId": { "type": "string" },
+        "internshipTitle": { "type": "string" },
+        "domain": { "type": "string" },
+        "github": { "type": "string" },
+        "portfolio": { "type": "string" },
+        "linkedin": { "type": "string" },
+        "resumeUrl": { "type": "string" },
+        "paymentScreenshotUrl": { "type": "string" },
+        "paymentStatus": { "type": "string", "enum": ["pending", "verified", "rejected"] },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "email", "phone", "college", "degree", "year", "city", "internshipId"]
+    },
+    "ProjectApplication": {
+      "title": "Project Application",
+      "description": "Student application for project assistance or showcases.",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "college": { "type": "string" },
+        "department": { "type": "string" },
+        "domain": { "type": "string" },
+        "type": { "type": "string" },
+        "teamSize": { "type": "string" },
+        "techPreference": { "type": "string" },
+        "description": { "type": "string" },
+        "paymentScreenshotUrl": { "type": "string" },
+        "paymentStatus": { "type": "string", "enum": ["pending", "verified", "rejected"] },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/config/payment": {
+      "schema": "SystemConfig",
+      "description": "Global payment settings."
+    },
+    "/internships/{internshipId}": {
+      "schema": "Internship",
+      "description": "Catalog of internships."
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Catalog of projects."
+    },
+    "/internship_applications/{applicationId}": {
+      "schema": "InternshipApplication",
+      "description": "Collection of internship applications."
+    },
+    "/project_applications/{applicationId}": {
+      "schema": "ProjectApplication",
+      "description": "Collection of project requests."
+    }
+  }
+}
