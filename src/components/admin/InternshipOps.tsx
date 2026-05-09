@@ -91,12 +91,24 @@ export default function InternshipOps() {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data, error } = await supabase
+      // Try with created_at ordering first, fall back to no ordering
+      let { data, error } = await supabase
         .from('internships')
         .select('*')
         .order('created_at', { ascending: false });
-      if (error) console.error('Fetch internships error:', error.message);
-      if (data) setInternships(data);
+
+      if (error) {
+        console.warn('Order by created_at failed, retrying without order:', error.message);
+        // Fallback: fetch without ordering
+        const res = await supabase.from('internships').select('*');
+        data = res.data;
+        if (res.error) {
+          console.error('Internships fetch error:', res.error.message, res.error.details);
+        }
+      }
+
+      console.log('Fetched internships:', data?.length ?? 0, data);
+      setInternships(data || []);
     };
     fetch();
     const sub = supabase.channel('internships_ops')
