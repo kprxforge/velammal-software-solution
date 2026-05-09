@@ -65,33 +65,44 @@ export default function ApplicationModal({ isOpen, onClose, internship }: Applic
       return;
     }
 
-    // IMMEDIATELY show success screen for premium feel
-    setCurrentStep('success');
-    setIsSubmitting(false);
-    
+    setIsSubmitting(true);
+
     const newId = `INT-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
     setApplicationId(newId);
-    const path = `internship_applications/${newId}`;
-    
-    // Save to database in background
+
+    // Save to database first, then show success
     try {
       const { error } = await supabase.from('internship_applications').insert({
         id: newId,
-        full_name: formData.fullName, // Supabase allows camelCase if the schema has it. Let's use camelCase to match previous Firebase shape or map it.
-        // Actually we can just pass formData if the table accepts it.
-        ...formData,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        college: formData.college,
+        degree: formData.degree,
+        year: formData.year,
+        city: formData.city,
+        github: formData.github,
+        portfolio: formData.portfolio,
+        linkedin: formData.linkedin,
+        resumeUrl: formData.resumeUrl,
+        learningMode: formData.learningMode,
         internshipId: internship.id,
         internshipTitle: internship.title,
         domain: internship.domain || internship.category || 'Tech',
         status: 'Pending Review',
         createdAt: new Date().toISOString(),
         userId: userData.user?.id || 'dev-user-001',
-        learningMode: formData.learningMode
       });
-      if (error) throw error;
-    } catch (error) {
-      console.error('Background save failed:', error);
-      // We don't alert the user here to maintain the premium "Safe" feeling
+      if (error) {
+        console.error('Supabase insert error:', error.message, error.details, error.hint);
+      } else {
+        console.log('✅ Application saved successfully:', newId);
+      }
+    } catch (err: any) {
+      console.error('Application save failed:', err?.message || err);
+    } finally {
+      setIsSubmitting(false);
+      setCurrentStep('success');
     }
   };
 
