@@ -11,6 +11,8 @@ export default function InternshipOps() {
   const [internships, setInternships] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedMsg, setSeedMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -33,28 +35,9 @@ export default function InternshipOps() {
     iconName: 'Code'
   });
 
-  useEffect(() => {
-    const fetchInternships = async () => {
-      const { data, error } = await supabase.from('internships').select('*').order('createdAt', { ascending: false });
-      if (data) {
-        setInternships(data);
-        // Auto-seed if empty
-        if (data.length === 0) {
-          seedCourses();
-        }
-      }
-    };
-
-    fetchInternships();
-
-    const subscription = supabase.channel('internships_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'internships' }, fetchInternships)
-      .subscribe();
-
-    return () => { supabase.removeChannel(subscription); };
-  }, []);
-
   const seedCourses = async () => {
+    setIsSeeding(true);
+    setSeedMsg(null);
     const seedData = [
       {
         title: "Python for Development",
@@ -68,14 +51,12 @@ export default function InternshipOps() {
         level: "Beginner to Intermediate",
         description: "Learn Python programming from scratch and build real-world development skills including automation, APIs, backend fundamentals, and mini-project development.",
         modules: [
-          "Python Fundamentals", "Variables & Data Types", "Loops & Conditions", "Functions & Modules", 
-          "OOP Concepts", "File Handling", "Exception Handling", "APIs & JSON", 
+          "Python Fundamentals", "Variables & Data Types", "Loops & Conditions", "Functions & Modules",
+          "OOP Concepts", "File Handling", "Exception Handling", "APIs & JSON",
           "Database Basics", "Python Mini Projects", "Final Real-Time Project"
         ],
         tools: ["Python", "VS Code", "GitHub", "SQLite"],
-        features: [
-          "Live mentorship", "Practice tasks", "Internship certificate", "Placement guidance"
-        ],
+        features: ["Live mentorship", "Practice tasks", "Internship certificate", "Placement guidance"],
         skills: ["Python", "VS Code", "GitHub", "SQLite"],
         status: "Open",
         active: true,
@@ -97,9 +78,7 @@ export default function InternshipOps() {
           "Node.js", "Express.js", "REST APIs", "Authentication", "MongoDB"
         ],
         tools: ["VS Code", "GitHub", "Postman", "MongoDB Atlas"],
-        features: [
-          "Live coding sessions", "Deployment training", "Internship certificate", "Resume support"
-        ],
+        features: ["Live coding sessions", "Deployment training", "Internship certificate", "Resume support"],
         skills: ["React", "Node.js", "MongoDB", "Tailwind"],
         status: "Open",
         active: true,
@@ -117,13 +96,13 @@ export default function InternshipOps() {
         level: "Beginner to Advanced",
         description: "Learn data analysis, visualization, dashboards, and business insights using modern analytics tools.",
         modules: [
-          "Introduction to Data Analytics", "Excel Fundamentals", "Data Cleaning", 
-          "Data Visualization", "SQL Basics", "Python for Analytics", "Pandas & NumPy", 
+          "Introduction to Data Analytics", "Excel Fundamentals", "Data Cleaning",
+          "Data Visualization", "SQL Basics", "Python for Analytics", "Pandas & NumPy",
           "Power BI Basics", "Dashboard Creation", "Business Insights", "Analytics Final Project"
         ],
         tools: ["Excel", "Power BI", "Python", "Pandas", "NumPy"],
         features: [
-          "Industry datasets", "Dashboard projects", "Analytics case studies", 
+          "Industry datasets", "Dashboard projects", "Analytics case studies",
           "Internship certificate", "AI learning support"
         ],
         skills: ["Python", "SQL", "Power BI", "Excel"],
@@ -133,14 +112,51 @@ export default function InternshipOps() {
       }
     ];
 
-    for (const course of seedData) {
-      // Check if course exists first to avoid duplicates
-      const { data: existing } = await supabase.from('internships').select('id').eq('title', course.title).single();
-      if (!existing) {
-        await supabase.from('internships').insert({ ...course, createdAt: new Date().toISOString() });
+    try {
+      let inserted = 0;
+      let skipped = 0;
+      for (const course of seedData) {
+        const { data: existing } = await supabase
+          .from('internships')
+          .select('id')
+          .eq('title', course.title)
+          .maybeSingle();
+        if (!existing) {
+          const { error } = await supabase
+            .from('internships')
+            .insert({ ...course, createdAt: new Date().toISOString() });
+          if (error) throw error;
+          inserted++;
+        } else {
+          skipped++;
+        }
       }
+      const msg = inserted > 0
+        ? `✅ Seeded ${inserted} course(s) successfully!${skipped > 0 ? ` (${skipped} already existed)` : ''}`
+        : `ℹ️ All 3 courses already exist in the database.`;
+      setSeedMsg({ type: 'success', text: msg });
+    } catch (err: any) {
+      setSeedMsg({ type: 'error', text: `❌ Seed failed: ${err?.message || 'Unknown error'}` });
+    } finally {
+      setIsSeeding(false);
+      setTimeout(() => setSeedMsg(null), 5000);
     }
   };
+
+  useEffect(() => {
+    const fetchInternships = async () => {
+      const { data } = await supabase.from('internships').select('*').order('createdAt', { ascending: false });
+      if (data) setInternships(data);
+    };
+
+    fetchInternships();
+
+    const subscription = supabase.channel('internships_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'internships' }, fetchInternships)
+      .subscribe();
+
+    return () => { supabase.removeChannel(subscription); };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,20 +217,37 @@ export default function InternshipOps() {
           <h2 className="font-display text-2xl font-bold text-white uppercase tracking-tight">Internship Operations</h2>
           <p className="text-white/40 text-sm">Deploy and manage the next generation of talent.</p>
         </div>
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={seedCourses}
-            className="flex items-center gap-2 px-6 py-3 bg-purple-400/10 text-purple-400 border border-purple-400/20 font-display text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-purple-400/20 transition-all"
-          >
-            Seed Advanced Data
-          </button>
-          <button 
-            onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-cyan-400 text-black font-display text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-white transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)]"
-          >
-            <Plus className="w-4 h-4" />
-            Deploy New Program
-          </button>
+        <div className="flex flex-col items-end gap-3">
+          {seedMsg && (
+            <div className={cn(
+              "px-5 py-2 rounded-2xl text-xs font-display font-black uppercase tracking-widest border",
+              seedMsg.type === 'success'
+                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                : "bg-red-500/10 border-red-500/20 text-red-400"
+            )}>
+              {seedMsg.text}
+            </div>
+          )}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={seedCourses}
+              disabled={isSeeding}
+              className="flex items-center gap-2 px-6 py-3 bg-purple-400/10 text-purple-400 border border-purple-400/20 font-display text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-purple-400/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSeeding ? (
+                <><span className="w-3 h-3 border-2 border-purple-400/40 border-t-purple-400 rounded-full animate-spin" /> Seeding...</>
+              ) : (
+                'Seed Advanced Data'
+              )}
+            </button>
+            <button
+              onClick={() => setIsAdding(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-cyan-400 text-black font-display text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-white transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+            >
+              <Plus className="w-4 h-4" />
+              Deploy New Program
+            </button>
+          </div>
         </div>
       </div>
 
