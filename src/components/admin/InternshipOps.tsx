@@ -91,7 +91,11 @@ export default function InternshipOps() {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await supabase.from('internships').select('*').order('createdAt', { ascending: false });
+      const { data, error } = await supabase
+        .from('internships')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) console.error('Fetch internships error:', error.message);
       if (data) setInternships(data);
     };
     fetch();
@@ -107,24 +111,33 @@ export default function InternshipOps() {
     try {
       let inserted = 0, skipped = 0;
       for (const course of DEFAULT_COURSES) {
-        const { data: existing } = await supabase
+        const { data: existing, error: fetchErr } = await supabase
           .from('internships').select('id').eq('title', course.title).maybeSingle();
+        if (fetchErr) {
+          console.error('Fetch check error:', fetchErr.message, fetchErr.details);
+        }
         if (!existing) {
-          const { error } = await supabase.from('internships')
-            .insert({ ...course, createdAt: new Date().toISOString() });
-          if (error) throw error;
+          // Do NOT send createdAt — let Supabase use created_at DEFAULT NOW()
+          const { error } = await supabase.from('internships').insert({ ...course });
+          if (error) {
+            console.error('Insert error:', error.message, error.details, error.hint);
+            throw new Error(error.message);
+          }
+          console.log('✅ Inserted:', course.title);
           inserted++;
         } else {
+          console.log('⏭️ Already exists:', course.title);
           skipped++;
         }
       }
       if (inserted > 0) {
-        showToast('success', `✅ ${inserted} course(s) deployed!${skipped > 0 ? ` (${skipped} already existed)` : ''}`);
+        showToast('success', `✅ ${inserted} program(s) deployed successfully!${skipped > 0 ? ` (${skipped} already existed)` : ''}`);
       } else {
-        showToast('success', 'ℹ️ All 3 courses already exist in the database.');
+        showToast('success', 'ℹ️ Programs already deployed — all 3 courses exist.');
       }
     } catch (err: any) {
-      showToast('error', `❌ Deploy failed: ${err?.message || 'Unknown error'}`);
+      console.error('Deploy failed:', err);
+      showToast('error', `❌ Deploy failed: ${err?.message || 'Unknown error'}. Check browser console.`);
     } finally {
       setIsDeploying(false);
     }
@@ -136,11 +149,14 @@ export default function InternshipOps() {
     const data = { ...formData, skills: toArr(formData.skills), modules: toArr(formData.modules), tools: toArr(formData.tools), features: toArr(formData.features) };
     try {
       if (editingId) {
-        await supabase.from('internships').update(data).eq('id', editingId);
+        const { error } = await supabase.from('internships').update(data).eq('id', editingId);
+        if (error) throw new Error(error.message);
         showToast('success', '✅ Course updated!');
         setEditingId(null);
       } else {
-        await supabase.from('internships').insert({ ...data, createdAt: new Date().toISOString() });
+        // No createdAt — let Supabase handle created_at automatically
+        const { error } = await supabase.from('internships').insert({ ...data });
+        if (error) throw new Error(error.message);
         showToast('success', '✅ New course deployed!');
         setIsAdding(false);
       }
