@@ -85,7 +85,7 @@ export default function ProjectApplicationModal({ isOpen, onClose, project }: Pr
     const newId = `PRJ-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     try {
-      const { error } = await supabase.from('project_requests').insert({
+      const { error } = await supabase.from('project_requests').insert([{
         id: newId,
         full_name: formData.fullName,
         ...formData,
@@ -93,10 +93,13 @@ export default function ProjectApplicationModal({ isOpen, onClose, project }: Pr
         projectTitle: project?.title || 'Custom Request',
         paymentStatus: 'unpaid',
         status: 'Pending Review',
-        createdAt: new Date().toISOString(),
         userId: userData.user?.id || 'dev-user-001',
-      });
-      if (error) throw error;
+      }]);
+      if (error) {
+        console.error("Supabase insert error:", error.message, error.details);
+        alert(`Failed to apply: ${error.message}`);
+        throw error;
+      }
       setApplicationId(newId);
       setShowPayment(true);
     } catch (error: any) {

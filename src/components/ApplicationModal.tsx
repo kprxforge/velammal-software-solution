@@ -72,7 +72,7 @@ export default function ApplicationModal({ isOpen, onClose, internship }: Applic
 
     // Save to database first, then show success
     try {
-      const { error } = await supabase.from('internship_applications').insert({
+      const { error } = await supabase.from('internship_applications').insert([{
         id: newId,
         fullName: formData.fullName,
         email: formData.email,
@@ -90,11 +90,11 @@ export default function ApplicationModal({ isOpen, onClose, internship }: Applic
         internshipTitle: internship.title,
         domain: internship.domain || internship.category || 'Tech',
         status: 'Pending Review',
-        createdAt: new Date().toISOString(),
         userId: userData.user?.id || 'dev-user-001',
-      });
+      }]);
       if (error) {
         console.error('Supabase insert error:', error.message, error.details, error.hint);
+        alert(`Failed to apply: ${error.message}`);
       } else {
         console.log('✅ Application saved successfully:', newId);
       }

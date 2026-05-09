@@ -4,9 +4,12 @@ import { Check, X, Briefcase, Loader2, Upload, MessageSquare, Zap } from 'lucide
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
+type AppType = 'internship' | 'project_request' | 'project_upload';
+
 export default function ApplicationOps() {
   const [applications, setApplications] = useState<any[]>([]);
   const [filter, setFilter] = useState<'all' | 'Pending Review' | 'accepted' | 'rejected'>('all');
+  const [activeTab, setActiveTab] = useState<AppType>('internship');
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -14,28 +17,29 @@ export default function ApplicationOps() {
     const fetchApplications = async () => {
       setIsLoading(true);
 
+      const fetchTable = async (table: string) => {
+        let res = await supabase.from(table).select('*').order('created_at', { ascending: false });
+        if (res.error) {
+          console.warn(`[${table}] created_at failed, trying createdAt:`, res.error.message);
+          res = await supabase.from(table).select('*').order('createdAt', { ascending: false });
+          if (res.error) {
+            console.warn(`[${table}] createdAt failed, trying unordered:`, res.error.message);
+            res = await supabase.from(table).select('*');
+          }
+        }
+        return res.data || [];
+      };
+
       // 1. Internship Applications
-      const { data: interData, error: interErr } = await supabase
-        .from('internship_applications')
-        .select('*')
-        .order('createdAt', { ascending: false });
-      if (interErr) console.error('internship_applications error:', interErr.message);
+      const interData = await fetchTable('internship_applications');
 
       // 2. Custom Project Requests
-      const { data: projData, error: projErr } = await supabase
-        .from('project_requests')
-        .select('*')
-        .order('createdAt', { ascending: false });
-      if (projErr) console.error('project_requests error:', projErr.message);
+      const projData = await fetchTable('project_requests');
 
       // 3. Project Uploads
-      const { data: uploadData, error: uploadErr } = await supabase
-        .from('projects')
-        .select('*')
-        .order('createdAt', { ascending: false });
-      if (uploadErr) console.error('projects error:', uploadErr.message);
+      const uploadData = await fetchTable('projects');
 
-      const interList = (interData || []).map(d => ({
+      const interList = interData.map(d => ({
         ...d,
         type: 'internship',
         displayName: d.fullName || d.full_name || 'Unknown',
@@ -44,7 +48,7 @@ export default function ApplicationOps() {
         displaySub: d.college || d.learningMode || '',
       }));
 
-      const projList = (projData || []).map(d => ({
+      const projList = projData.map(d => ({
         ...d,
         type: 'project_request',
         status: d.status || 'Pending Review',
@@ -54,7 +58,7 @@ export default function ApplicationOps() {
         displaySub: d.city || d.collegeOrCompany || '',
       }));
 
-      const uploadList = (uploadData || []).map(d => ({
+      const uploadList = uploadData.map(d => ({
         ...d,
         type: 'project_upload',
         status: d.status === 'pending_approval' ? 'Pending Review' : (d.status || 'Pending Review'),
@@ -64,9 +68,11 @@ export default function ApplicationOps() {
         displaySub: d.category || '',
       }));
 
-      const combined = [...interList, ...projList, ...uploadList].sort((a, b) =>
-        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-      );
+      const combined = [...interList, ...projList, ...uploadList].sort((a, b) => {
+        const timeA = new Date(a.created_at || a.createdAt || 0).getTime();
+        const timeB = new Date(b.created_at || b.createdAt || 0).getTime();
+        return timeB - timeA;
+      });
 
       setApplications(combined);
       setIsLoading(false);
@@ -116,6 +122,7 @@ export default function ApplicationOps() {
       }
     } catch (err: any) {
       console.error('Status update error:', err?.message || err);
+      alert(`Update failed: ${err.message}`);
     } finally {
       setProcessingId(null);
     }
@@ -142,7 +149,8 @@ export default function ApplicationOps() {
   const isPending = (status: string) =>
     !status || status === 'Pending Review' || status === 'pending_approval';
 
-  const filteredApps = filter === 'all' ? applications : applications.filter(a => {
+  const tabApps = applications.filter(a => a.type === activeTab);
+  const filteredApps = filter === 'all' ? tabApps : tabApps.filter(a => {
     if (filter === 'Pending Review') return isPending(a.status);
     return a.status === filter;
   });
@@ -153,7 +161,7 @@ export default function ApplicationOps() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <h2 className="font-display text-3xl font-black text-white uppercase tracking-tighter">Application Registry</h2>
-          <p className="text-white/40 text-sm mt-1">All internship applications, project requests & uploads — realtime.</p>
+          <p className="text-white/40 text-sm mt-1">Manage Realtime Submissions</p>
         </div>
         <div className="flex flex-wrap gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5">
           {(['all', 'Pending Review', 'accepted', 'rejected'] as const).map(f => (
@@ -171,17 +179,34 @@ export default function ApplicationOps() {
         </div>
       </div>
 
-      {/* Stats Bar */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Tabs / Stats Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Internship Apps', count: applications.filter(a => a.type === 'internship').length, color: 'text-cyan-400' },
-          { label: 'Project Requests', count: applications.filter(a => a.type === 'project_request').length, color: 'text-purple-400' },
-          { label: 'Project Uploads', count: applications.filter(a => a.type === 'project_upload').length, color: 'text-amber-400' },
+          { id: 'internship', label: 'Total Internship Applications', count: applications.filter(a => a.type === 'internship').length, color: 'text-cyan-400', border: 'border-cyan-500/30', bg: 'bg-cyan-500/10' },
+          { id: 'project_request', label: 'Custom Project Requests', count: applications.filter(a => a.type === 'project_request').length, color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-500/10' },
+          { id: 'project_upload', label: 'Project Uploads', count: applications.filter(a => a.type === 'project_upload').length, color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/10' },
         ].map(s => (
-          <div key={s.label} className="glass rounded-2xl p-4 border border-white/5 flex items-center gap-4">
-            <span className={cn("font-display text-3xl font-black", s.color)}>{s.count}</span>
-            <span className="font-display text-[10px] font-black text-white/40 uppercase tracking-widest leading-tight">{s.label}</span>
-          </div>
+          <button
+            key={s.id}
+            onClick={() => setActiveTab(s.id as AppType)}
+            className={cn(
+              "rounded-2xl p-6 border text-left transition-all relative overflow-hidden group",
+              activeTab === s.id ? `${s.bg} ${s.border}` : "glass border-white/5 hover:border-white/20 hover:bg-white/[0.02]"
+            )}
+          >
+            {activeTab === s.id && (
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-50" />
+            )}
+            <div className="flex items-center gap-4">
+              <span className={cn("font-display text-4xl font-black", s.color)}>{s.count}</span>
+              <span className="font-display text-[10px] font-black text-white/40 uppercase tracking-widest leading-tight w-24">
+                {s.label}
+              </span>
+            </div>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Check className={cn("w-5 h-5", s.color)} />
+            </div>
+          </button>
         ))}
       </div>
 
@@ -197,7 +222,7 @@ export default function ApplicationOps() {
           {!isLoading && filteredApps.map((app) => (
             <motion.div
               layout
-              key={app.id}
+              key={app.id || Math.random().toString()}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98 }}
@@ -219,7 +244,7 @@ export default function ApplicationOps() {
                     <p className="text-white/20 font-sans text-xs mt-1">{app.displaySub}</p>
                   )}
                   <p className="text-white/20 font-mono text-[10px] mt-1">
-                    {app.createdAt ? new Date(app.createdAt).toLocaleString() : 'N/A'}
+                    {app.created_at || app.createdAt ? new Date(app.created_at || app.createdAt).toLocaleString() : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -270,14 +295,18 @@ export default function ApplicationOps() {
             className="py-32 text-center space-y-6"
           >
             <div className="w-24 h-24 rounded-full bg-white/5 border border-dashed border-white/10 flex items-center justify-center mx-auto">
-              <Zap className="w-10 h-10 text-white/10" />
+              {activeTab === 'internship' ? <Briefcase className="w-10 h-10 text-cyan-400/20" /> :
+               activeTab === 'project_request' ? <MessageSquare className="w-10 h-10 text-purple-400/20" /> :
+               <Upload className="w-10 h-10 text-amber-400/20" />}
             </div>
             <div className="space-y-2">
-              <p className="font-display text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">No Requests Yet</p>
-              <p className="font-sans text-sm text-white/10">
+              <p className="font-display text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">
+                0 {typeLabel(activeTab)}s
+              </p>
+              <p className="font-sans text-sm text-white/40">
                 {filter === 'all'
-                  ? 'No submissions received yet. They will appear here in realtime.'
-                  : `No applications with status "${filter}" found.`}
+                  ? `No ${typeLabel(activeTab).toLowerCase()}s received yet. They will appear here in realtime.`
+                  : `No ${typeLabel(activeTab).toLowerCase()}s with status "${filter}" found.`}
               </p>
             </div>
           </motion.div>

@@ -68,7 +68,7 @@ export default function RequestProjectModal({ isOpen, onClose }: RequestProjectM
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id || 'guest';
       
-      const { error } = await supabase.from('project_requests').insert({
+      const { error } = await supabase.from('project_requests').insert([{
         fullName: form.name,
         phone: form.phone,
         email: form.email,
@@ -79,10 +79,13 @@ export default function RequestProjectModal({ isOpen, onClose }: RequestProjectM
         features: form.features,
         userId: userId,
         status: 'Pending Review',
-        createdAt: new Date().toISOString(),
-      });
+      }]);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase insert error:", error.message, error.details);
+        alert(`Failed to request project: ${error.message}`);
+        throw error;
+      }
     } catch (error) {
       console.error("Database save failed (likely permissions), continuing to success screen:", error);
     } finally {
