@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Mail, Lock, LogIn, Github, Command, ShieldCheck, Cpu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
-import { signInWithGoogle } from '@/lib/supabase';
+import { signInWithGoogle, supabase } from '@/lib/supabase';
 
 interface LoginProps {
   onLogin: () => void;
@@ -15,6 +15,17 @@ export default function Login({ onLogin, guest = false }: LoginProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
+
+  // Handle OAuth callback — if user is already authenticated when this page loads,
+  // call onLogin and redirect to internships (this fires after Google OAuth redirect-back)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        onLogin();
+        navigate('/internships', { replace: true });
+      }
+    });
+  }, []);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -44,7 +55,7 @@ export default function Login({ onLogin, guest = false }: LoginProps) {
       setTimeout(() => {
         localStorage.setItem('vss_dev_login', 'true');
         onLogin();
-        if (!guest) navigate('/internships');
+        navigate('/internships', { replace: true });
         setIsLoading(false);
       }, 1000);
       return;

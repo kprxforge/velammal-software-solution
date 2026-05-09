@@ -26,7 +26,7 @@ export default function ApplicationModal({ isOpen, onClose, internship }: Applic
   const [formData, setFormData] = useState({
     learningMode: '',
     fullName: '',
-    email: auth.currentUser?.email || '',
+    email: '',
     phone: '',
     college: '',
     degree: '',

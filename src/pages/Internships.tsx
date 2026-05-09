@@ -71,7 +71,7 @@ const InternshipCard = ({ job, index, handleViewDetails, handleApply }: any) => 
         </div>
 
         <div className="relative z-10 flex flex-wrap gap-2 mb-6 mt-auto">
-          {job.skills?.slice(0, 4).map((skill: string) => (
+          {(Array.isArray(job.skills) ? job.skills : []).slice(0, 4).map((skill: string) => (
             <span key={skill} className="px-3 py-1.5 text-[10px] font-mono rounded-xl bg-white/5 text-white/40 border border-white/5 group-hover:text-white/60 transition-colors">
               {skill}
             </span>
@@ -112,7 +112,7 @@ const InternshipCard = ({ job, index, handleViewDetails, handleApply }: any) => 
                   className="px-4 pb-4 overflow-hidden"
                 >
                   <ul className="space-y-2 mt-4">
-                    {job.modules.slice(0, 4).map((mod: string, i: number) => (
+                    {(Array.isArray(job.modules) ? job.modules : []).slice(0, 4).map((mod: string, i: number) => (
                       <li key={i} className="flex gap-3 text-white/50 font-sans text-xs items-start">
                         <div className="w-4 h-4 rounded bg-white/5 flex items-center justify-center text-[8px] font-bold shrink-0 mt-0.5">
                           {i + 1}
