@@ -36,7 +36,13 @@ export default function InternshipOps() {
   useEffect(() => {
     const fetchInternships = async () => {
       const { data, error } = await supabase.from('internships').select('*').order('createdAt', { ascending: false });
-      if (data) setInternships(data);
+      if (data) {
+        setInternships(data);
+        // Auto-seed if empty
+        if (data.length === 0) {
+          seedCourses();
+        }
+      }
     };
 
     fetchInternships();
@@ -60,18 +66,17 @@ export default function InternshipOps() {
         onlineAvailable: true,
         offlineAvailable: true,
         level: "Beginner to Intermediate",
-        description: "Learn Python programming from scratch and build real-world development skills. This internship focuses on practical coding, automation, APIs, backend fundamentals, and mini-project development.",
+        description: "Learn Python programming from scratch and build real-world development skills including automation, APIs, backend fundamentals, and mini-project development.",
         modules: [
           "Python Fundamentals", "Variables & Data Types", "Loops & Conditions", "Functions & Modules", 
-          "Object Oriented Programming", "File Handling", "Exception Handling", "APIs & JSON", 
+          "OOP Concepts", "File Handling", "Exception Handling", "APIs & JSON", 
           "Database Basics", "Python Mini Projects", "Final Real-Time Project"
         ],
         tools: ["Python", "VS Code", "GitHub", "SQLite"],
         features: [
-          "Live mentorship", "Practice tasks", "Real-world mini projects", 
-          "Internship certificate", "Placement guidance"
+          "Live mentorship", "Practice tasks", "Internship certificate", "Placement guidance"
         ],
-        skills: ["Python", "Backend", "APIs", "SQLite"],
+        skills: ["Python", "VS Code", "GitHub", "SQLite"],
         status: "Open",
         active: true,
         color: "#eab308"
@@ -86,15 +91,14 @@ export default function InternshipOps() {
         onlineAvailable: true,
         offlineAvailable: true,
         level: "Beginner to Advanced",
-        description: "Master modern web development with frontend and backend technologies. Build responsive websites, APIs, authentication systems, and deploy full-stack applications.",
+        description: "Master frontend and backend development using modern technologies and build complete full-stack applications.",
         modules: [
-          "HTML5", "CSS3", "JavaScript", "Responsive Design", "Tailwind CSS", "React Basics",
-          "Node.js", "Express.js", "REST APIs", "Authentication", "MongoDB", "Database Integration"
+          "HTML5", "CSS3", "JavaScript", "Tailwind CSS", "React Basics",
+          "Node.js", "Express.js", "REST APIs", "Authentication", "MongoDB"
         ],
         tools: ["VS Code", "GitHub", "Postman", "MongoDB Atlas"],
         features: [
-          "Live coding sessions", "Real deployment training", "Project-based learning", 
-          "Internship certificate", "Resume support"
+          "Live coding sessions", "Deployment training", "Internship certificate", "Resume support"
         ],
         skills: ["React", "Node.js", "MongoDB", "Tailwind"],
         status: "Open",
@@ -103,7 +107,7 @@ export default function InternshipOps() {
       },
       {
         title: "Data Analytics Internship",
-        domain: "Analytics / AI / Business Intelligence",
+        domain: "Analytics / AI",
         originalPrice: 3000,
         fee: 2500,
         badge: "Future Tech",
@@ -111,7 +115,7 @@ export default function InternshipOps() {
         onlineAvailable: true,
         offlineAvailable: true,
         level: "Beginner to Advanced",
-        description: "Learn how to analyze, visualize, and interpret data using modern analytics tools. Understand business insights, dashboards, and data-driven decision making.",
+        description: "Learn data analysis, visualization, dashboards, and business insights using modern analytics tools.",
         modules: [
           "Introduction to Data Analytics", "Excel Fundamentals", "Data Cleaning", 
           "Data Visualization", "SQL Basics", "Python for Analytics", "Pandas & NumPy", 
@@ -120,7 +124,7 @@ export default function InternshipOps() {
         tools: ["Excel", "Power BI", "Python", "Pandas", "NumPy"],
         features: [
           "Industry datasets", "Dashboard projects", "Analytics case studies", 
-          "Internship certificate", "AI-powered learning support"
+          "Internship certificate", "AI learning support"
         ],
         skills: ["Python", "SQL", "Power BI", "Excel"],
         status: "Open",
@@ -130,9 +134,12 @@ export default function InternshipOps() {
     ];
 
     for (const course of seedData) {
-      await supabase.from('internships').insert({ ...course, createdAt: new Date().toISOString() });
+      // Check if course exists first to avoid duplicates
+      const { data: existing } = await supabase.from('internships').select('id').eq('title', course.title).single();
+      if (!existing) {
+        await supabase.from('internships').insert({ ...course, createdAt: new Date().toISOString() });
+      }
     }
-    alert('Seeded courses successfully!');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
