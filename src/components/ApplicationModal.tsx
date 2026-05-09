@@ -79,10 +79,12 @@ export default function ApplicationModal({ isOpen, onClose, internship }: Applic
         phone: formData.phone,
         college: formData.college || 'Not Provided',
         department: formData.degree || 'Not Provided',
+        year: formData.year || 'Not Provided',
         course_name: internship.title,
         mode: formData.learningMode || 'Not Provided',
         github: formData.github || '',
         linkedin: formData.linkedin || '',
+        resume: formData.resumeUrl || '',
         status: 'Pending Review',
       }]);
       
