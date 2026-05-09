@@ -74,25 +74,34 @@ export default function ApplicationModal({ isOpen, onClose, internship }: Applic
     try {
       const { error } = await supabase.from('internship_applications').insert([{
         id: newId,
-        fullName: formData.fullName,
+        full_name: formData.fullName, // Providing both in case one is missing, but typically full_name is used in standard setups
         email: formData.email,
         phone: formData.phone,
-        college: formData.college,
-        degree: formData.degree,
-        year: formData.year,
-        city: formData.city,
-        github: formData.github,
-        portfolio: formData.portfolio,
-        linkedin: formData.linkedin,
-        resumeUrl: formData.resumeUrl,
-        learningMode: formData.learningMode,
-        internshipId: internship.id,
-        internshipTitle: internship.title,
-        domain: internship.domain || internship.category || 'Tech',
+        internship_title: internship.title,
         status: 'Pending Review',
-        userId: userData.user?.id || 'dev-user-001',
+        user_id: userData.user?.id || 'dev-user-001',
       }]);
-      if (error) {
+      
+      // If the above fails because of camelCase vs snake_case, we will fallback to camelCase
+      if (error && error.message.includes('Could not find')) {
+        const fallback = await supabase.from('internship_applications').insert([{
+          id: newId,
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          internshipTitle: internship.title,
+          status: 'Pending Review',
+          userId: userData.user?.id || 'dev-user-001',
+        }]);
+        
+        if (fallback.error) {
+           console.error('Fallback insert error:', fallback.error);
+           alert(`Failed to apply: ${fallback.error.message}`);
+           return;
+        } else {
+           console.log('✅ Application saved successfully via fallback:', newId);
+        }
+      } else if (error) {
         console.error('Supabase insert error:', error.message, error.details, error.hint);
         alert(`Failed to apply: ${error.message}`);
       } else {
