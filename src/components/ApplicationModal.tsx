@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { toast } from 'react-hot-toast';
 
 interface ApplicationModalProps {
   isOpen: boolean;
@@ -73,39 +74,24 @@ export default function ApplicationModal({ isOpen, onClose, internship }: Applic
     // Save to database first, then show success
     try {
       const { error } = await supabase.from('internship_applications').insert([{
-        id: newId,
-        full_name: formData.fullName, // Providing both in case one is missing, but typically full_name is used in standard setups
+        student_name: formData.fullName,
         email: formData.email,
         phone: formData.phone,
-        internship_title: internship.title,
+        college: formData.college || 'Not Provided',
+        department: formData.degree || 'Not Provided',
+        course_name: internship.title,
+        mode: formData.learningMode || 'Not Provided',
+        github: formData.github || '',
+        linkedin: formData.linkedin || '',
         status: 'Pending Review',
-        user_id: userData.user?.id || 'dev-user-001',
       }]);
       
-      // If the above fails because of camelCase vs snake_case, we will fallback to camelCase
-      if (error && error.message.includes('Could not find')) {
-        const fallback = await supabase.from('internship_applications').insert([{
-          id: newId,
-          fullName: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          internshipTitle: internship.title,
-          status: 'Pending Review',
-          userId: userData.user?.id || 'dev-user-001',
-        }]);
-        
-        if (fallback.error) {
-           console.error('Fallback insert error:', fallback.error);
-           alert(`Failed to apply: ${fallback.error.message}`);
-           return;
-        } else {
-           console.log('✅ Application saved successfully via fallback:', newId);
-        }
-      } else if (error) {
-        console.error('Supabase insert error:', error.message, error.details, error.hint);
-        alert(`Failed to apply: ${error.message}`);
+      if (error) {
+        console.error("Supabase Insert Error:", error);
+        toast.error(`Failed to apply: ${error.message}`);
       } else {
         console.log('✅ Application saved successfully:', newId);
+        toast.success("Application submitted successfully!");
       }
     } catch (err: any) {
       console.error('Application save failed:', err?.message || err);

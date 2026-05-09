@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronRight, ChevronLeft, CheckCircle2, Phone, MessageSquare, Zap, Building2, User, Mail, MapPin, Globe, Smartphone, Cpu, Laptop, FileText, Layout, ShoppingCart, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'react-hot-toast';
 
 interface RequestProjectModalProps {
   isOpen: boolean;
@@ -69,22 +70,22 @@ export default function RequestProjectModal({ isOpen, onClose }: RequestProjectM
       const userId = userData.user?.id || 'guest';
       
       const { error } = await supabase.from('project_requests').insert([{
-        fullName: form.name,
+        full_name: form.name,
         phone: form.phone,
         email: form.email,
-        collegeOrCompany: form.collegeOrCompany,
+        organization: form.collegeOrCompany,
         city: form.city,
-        projectType: form.projectType,
+        project_type: form.projectType,
         description: form.description,
         features: form.features,
-        userId: userId,
-        status: 'Pending Review',
       }]);
       
       if (error) {
-        console.error("Supabase insert error:", error.message, error.details);
-        alert(`Failed to request project: ${error.message}`);
+        console.error("Supabase Insert Error:", error);
+        toast.error(`Failed to request project: ${error.message}`);
         throw error;
+      } else {
+        toast.success("Project request submitted successfully!");
       }
     } catch (error) {
       console.error("Database save failed (likely permissions), continuing to success screen:", error);

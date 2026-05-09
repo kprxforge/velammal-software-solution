@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import PaymentModal from './payment/PaymentModal';
 import { ShieldCheck } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface ProjectApplicationModalProps {
   isOpen: boolean;
@@ -86,20 +87,22 @@ export default function ProjectApplicationModal({ isOpen, onClose, project }: Pr
     
     try {
       const { error } = await supabase.from('project_requests').insert([{
-        id: newId,
         full_name: formData.fullName,
-        ...formData,
-        projectId: project?.id || 'new',
-        projectTitle: project?.title || 'Custom Request',
-        paymentStatus: 'unpaid',
-        status: 'Pending Review',
-        userId: userData.user?.id || 'dev-user-001',
+        phone: formData.phone,
+        email: formData.email,
+        organization: formData.college,
+        city: 'Not Provided',
+        project_type: formData.type || 'Standard Project',
+        description: formData.description || `Inquiry for project: ${project?.title}`,
+        features: [formData.domain, formData.techPreference].filter(Boolean),
       }]);
+      
       if (error) {
-        console.error("Supabase insert error:", error.message, error.details);
-        alert(`Failed to apply: ${error.message}`);
+        console.error("Supabase Insert Error:", error);
+        toast.error(`Failed to apply: ${error.message}`);
         throw error;
       }
+      toast.success("Application submitted successfully!");
       setApplicationId(newId);
       setShowPayment(true);
     } catch (error: any) {

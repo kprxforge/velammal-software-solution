@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Upload, CheckCircle2, ChevronRight, Zap, Target, Laptop, Github, Link as LinkIcon, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
 interface ProjectUploadModalProps {
@@ -58,29 +59,25 @@ export default function ProjectUploadModal({ isOpen, onClose }: ProjectUploadMod
       const imageUrl = await uploadScreenshot(userData.user.id);
       
       const projectData = {
-        title: formData.title,
+        user_name: userData.user.email || 'Unknown',
+        project_title: formData.title,
         category: formData.category,
         description: formData.description,
-        tech: formData.tech.split(',').map(t => t.trim()).filter(Boolean),
-        teamType: formData.teamType,
-        githubLink: formData.githubLink,
-        demoLink: formData.demoLink,
-        price: Number(formData.expectedPrice), // User's expected selling price
-        videoDemoLink: formData.videoDemoLink,
-        imageUrl: imageUrl,
-        userId: userData.user.id,
-        userEmail: userData.user.email,
-        active: false, // Needs admin approval to appear in marketplace
-        status: 'pending_approval', // Status of the upload
+        github_link: formData.githubLink || 'Not Provided',
+        demo_link: formData.demoLink || imageUrl || 'Not Provided',
       };
 
-      const { error } = await supabase.from('projects').insert([projectData]);
-      if (error) throw error;
+      const { error } = await supabase.from('project_uploads').insert([projectData]);
+      if (error) {
+         console.error("Supabase Insert Error:", error);
+         toast.error(`Failed to submit project: ${error.message}`);
+         throw error;
+      }
       
+      toast.success("Project uploaded successfully!");
       setIsSubmitted(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting project:", error);
-      alert("Failed to submit project.");
     } finally {
       setIsUploading(false);
     }

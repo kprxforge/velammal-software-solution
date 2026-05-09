@@ -37,34 +37,34 @@ export default function ApplicationOps() {
       const projData = await fetchTable('project_requests');
 
       // 3. Project Uploads
-      const uploadData = await fetchTable('projects');
+      const uploadData = await fetchTable('project_uploads');
 
       const interList = interData.map(d => ({
         ...d,
         type: 'internship',
-        displayName: d.fullName || d.full_name || 'Unknown',
-        displayTitle: d.internshipTitle || d.internship_title || 'Internship Application',
+        displayName: d.student_name || d.fullName || d.full_name || 'Unknown',
+        displayTitle: d.course_name || d.internshipTitle || d.internship_title || 'Internship Application',
         displayContact: d.phone || d.email || '',
-        displaySub: d.college || d.learningMode || '',
+        displaySub: d.college || d.mode || d.learningMode || '',
       }));
 
       const projList = projData.map(d => ({
         ...d,
         type: 'project_request',
         status: d.status || 'Pending Review',
-        displayName: d.fullName || d.full_name || 'Unknown',
-        displayTitle: d.projectType || 'Custom Project',
+        displayName: d.full_name || d.fullName || 'Unknown',
+        displayTitle: d.project_type || d.projectType || 'Custom Project',
         displayContact: d.phone || d.email || '',
-        displaySub: d.city || d.collegeOrCompany || '',
+        displaySub: d.city || d.organization || d.collegeOrCompany || '',
       }));
 
       const uploadList = uploadData.map(d => ({
         ...d,
         type: 'project_upload',
-        status: d.status === 'pending_approval' ? 'Pending Review' : (d.status || 'Pending Review'),
-        displayName: d.userEmail || 'Unknown',
-        displayTitle: d.title || 'Project Upload',
-        displayContact: d.userEmail || '',
+        status: d.status || 'Pending Review',
+        displayName: d.user_name || d.userEmail || 'Unknown',
+        displayTitle: d.project_title || d.title || 'Project Upload',
+        displayContact: d.user_name || d.userEmail || '',
         displaySub: d.category || '',
       }));
 
@@ -89,7 +89,7 @@ export default function ApplicationOps() {
       .subscribe();
 
     const uploadSub = supabase.channel('admin_proj_uploads')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, fetchApplications)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'project_uploads' }, fetchApplications)
       .subscribe();
 
     return () => {

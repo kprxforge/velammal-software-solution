@@ -8,7 +8,7 @@ import Internships from './pages/Internships';
 import Projects from './pages/Projects';
 import Admin from './pages/Admin';
 import StarsCanvas from './components/canvas/StarsCanvas';
-
+import { Toaster } from 'react-hot-toast';
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
@@ -44,6 +44,9 @@ export default function App() {
         <div className="fixed inset-0 z-[-1]">
           <StarsCanvas />
         </div>
+        <Toaster position="top-right" toastOptions={{ 
+          style: { background: '#09090b', color: '#fff', border: '1px solid #27272a' }
+        }} />
         <Navbar />
         <main className="pt-20 min-h-screen">
           <Routes>
