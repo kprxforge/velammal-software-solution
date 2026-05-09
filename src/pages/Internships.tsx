@@ -189,10 +189,9 @@ export default function Internships() {
         console.log('[Internships] Raw data from Supabase:', data?.length ?? 0, data);
 
         if (data && data.length > 0) {
-          // Show all courses — active true OR undefined/null; only hide explicitly false
-          const visible = data.filter((i: any) => i.active !== false);
-          console.log('[Internships] Visible courses after filter:', visible.length);
-          setInternships(visible.length > 0 ? visible : data); // if all filtered out, show all
+          // Show all courses unconditionally to prevent courses from randomly disappearing
+          console.log('[Internships] Total courses fetched:', data.length);
+          setInternships(data);
         }
       } catch (err: any) {
         console.error('[Internships] Unexpected fetch error:', err?.message);
