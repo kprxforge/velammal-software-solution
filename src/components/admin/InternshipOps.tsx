@@ -12,10 +12,10 @@ const DEFAULT_COURSES = [
     title: "Python for Development",
     domain: "Programming / Software Development",
     duration: "2 Months",
-    onlineAvailable: true,
-    offlineAvailable: true,
+    online_available: true,
+    offline_available: true,
     level: "Beginner to Intermediate",
-    originalPrice: 3000,
+    original_price: 3000,
     fee: 2500,
     badge: "Most Popular",
     description: "Learn Python programming from scratch and build real-world development skills including automation, APIs, backend fundamentals, and mini-project development.",
@@ -31,10 +31,10 @@ const DEFAULT_COURSES = [
     title: "Full Stack Web Development",
     domain: "Web Development",
     duration: "3 Months",
-    onlineAvailable: true,
-    offlineAvailable: true,
+    online_available: true,
+    offline_available: true,
     level: "Beginner to Advanced",
-    originalPrice: 3000,
+    original_price: 3000,
     fee: 2500,
     badge: "Trending",
     description: "Master frontend and backend development using modern technologies and build complete full-stack applications.",
@@ -50,10 +50,10 @@ const DEFAULT_COURSES = [
     title: "Data Analytics Internship",
     domain: "Analytics / AI",
     duration: "2 Months",
-    onlineAvailable: true,
-    offlineAvailable: true,
+    online_available: true,
+    offline_available: true,
     level: "Beginner to Advanced",
-    originalPrice: 3000,
+    original_price: 3000,
     fee: 2500,
     badge: "Future Tech",
     description: "Learn data analysis, visualization, dashboards, and business insights using modern analytics tools.",
@@ -68,8 +68,8 @@ const DEFAULT_COURSES = [
 ];
 
 const emptyForm = {
-  title: '', domain: '', duration: '', originalPrice: 3000, fee: 2500,
-  badge: '', level: '', onlineAvailable: true, offlineAvailable: true,
+  title: '', domain: '', duration: '', original_price: 3000, fee: 2500,
+  badge: '', level: '', online_available: true, offline_available: true,
   description: '', modules: '', tools: '', features: '', skills: '',
   status: 'Open', active: true, color: '#22d3ee', iconName: 'Code',
 };
@@ -295,11 +295,11 @@ export default function InternshipOps() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <label className="flex items-center gap-3 cursor-pointer p-3.5 rounded-2xl bg-white/5 border border-white/10">
-                    <input type="checkbox" checked={formData.onlineAvailable} onChange={e => setFormData({ ...formData, onlineAvailable: e.target.checked })} className="w-4 h-4 accent-cyan-400" />
+                    <input type="checkbox" checked={formData.online_available} onChange={e => setFormData({ ...formData, online_available: e.target.checked })} className="w-4 h-4 accent-cyan-400" />
                     <span className="text-white text-sm font-sans">Online</span>
                   </label>
                   <label className="flex items-center gap-3 cursor-pointer p-3.5 rounded-2xl bg-white/5 border border-white/10">
-                    <input type="checkbox" checked={formData.offlineAvailable} onChange={e => setFormData({ ...formData, offlineAvailable: e.target.checked })} className="w-4 h-4 accent-cyan-400" />
+                    <input type="checkbox" checked={formData.offline_available} onChange={e => setFormData({ ...formData, offline_available: e.target.checked })} className="w-4 h-4 accent-cyan-400" />
                     <span className="text-white text-sm font-sans">Offline</span>
                   </label>
                 </div>
@@ -387,14 +387,14 @@ export default function InternshipOps() {
                 <div className="flex items-baseline gap-2 mb-4">
                   <span className="font-display text-2xl font-black text-white">₹{job.fee?.toLocaleString()}</span>
                   {job.originalPrice && job.originalPrice > job.fee && (
-                    <span className="font-sans text-sm text-white/30 line-through">₹{job.originalPrice?.toLocaleString()}</span>
+                    <span className="font-sans text-sm text-white/30 line-through">₹{job.original_price?.toLocaleString()}</span>
                   )}
                 </div>
 
                 {/* Mode badges */}
                 <div className="flex gap-2 mb-4">
-                  {job.onlineAvailable && <span className="px-2.5 py-1 rounded-lg bg-cyan-400/10 text-cyan-400 text-[10px] font-black uppercase tracking-wider">Online</span>}
-                  {job.offlineAvailable && <span className="px-2.5 py-1 rounded-lg bg-purple-400/10 text-purple-400 text-[10px] font-black uppercase tracking-wider">Offline</span>}
+                  {job.online_available && <span className="px-2.5 py-1 rounded-lg bg-cyan-400/10 text-cyan-400 text-[10px] font-black uppercase tracking-wider">Online</span>}
+                  {job.offline_available && <span className="px-2.5 py-1 rounded-lg bg-purple-400/10 text-purple-400 text-[10px] font-black uppercase tracking-wider">Offline</span>}
                 </div>
 
                 {/* Syllabus expand */}
