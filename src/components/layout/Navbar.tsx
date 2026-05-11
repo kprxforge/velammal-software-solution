@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 import Logo from '../ui/Logo';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -17,6 +20,24 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    localStorage.removeItem('vss_dev_login');
+    await supabase.auth.signOut();
+    navigate('/');
+  };
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -73,6 +94,24 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
+            
+            {/* Login/Logout Button */}
+            {isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="px-6 py-2 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white font-display text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            ) : (
+              <Link to="/login">
+                <button className="px-6 py-2 rounded-full bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 hover:bg-cyan-400 hover:text-black font-display text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2">
+                  <LogIn className="w-4 h-4" />
+                  Login
+                </button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -109,11 +148,25 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
-            <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-              <div className="inline-flex mt-2 px-6 py-2 border border-white/20 rounded-full text-white hover:bg-white/10 transition-colors">
-                Sign In
-              </div>
-            </Link>
+            {isLoggedIn ? (
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="inline-flex mt-2 px-6 py-2 border border-red-500/30 rounded-full text-red-400 hover:bg-red-500 hover:text-white transition-colors items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            ) : (
+              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                <div className="inline-flex mt-2 px-6 py-2 border border-cyan-400/30 rounded-full text-cyan-400 hover:bg-cyan-400 hover:text-black transition-colors items-center gap-2">
+                  <LogIn className="w-4 h-4" />
+                  Login
+                </div>
+              </Link>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
