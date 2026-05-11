@@ -74,6 +74,7 @@ export default function ApplicationModal({ isOpen, onClose, internship }: Applic
     // Save to database first, then show success
     try {
       const { error } = await supabase.from('internship_applications').insert([{
+        id: newId,
         student_name: formData.fullName,
         email: formData.email,
         phone: formData.phone,
