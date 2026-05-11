@@ -39,13 +39,20 @@ export default function Admin() {
 
       if (currentUser) {
         let isUserAdmin = false;
+        
+        // Check hardcoded super admin
         if (currentUser.email === 'sit24am005@sairamtap.edu.in') {
           isUserAdmin = true;
-          // You might want to save to an 'admins' table in Supabase instead if needed:
-          // await supabase.from('admins').upsert({ id: currentUser.id, email: currentUser.email, role: 'super_admin' });
         } else {
+          // Check admins table
           const { data } = await supabase.from('admins').select('*').eq('id', currentUser.id).single();
-          if (data) isUserAdmin = true;
+          if (data) {
+            isUserAdmin = true;
+          } else if (currentUser.user_metadata?.provider === 'google') {
+            // Temporary OAuth access - any Google-authenticated user can access admin
+            isUserAdmin = true;
+            console.warn('⚠️ Temporary admin access granted via OAuth:', currentUser.email);
+          }
         }
 
         setIsAdmin(isUserAdmin);
@@ -214,6 +221,17 @@ export default function Admin() {
             <button className="p-4 rounded-[1.5rem] bg-white/5 border border-white/10 hover:border-cyan-400/30 transition-all group relative">
                <Bell className="w-6 h-6 text-white/40 group-hover:text-cyan-400" />
                <div className="absolute top-4 right-4 w-2 h-2 bg-red-500 rounded-full border border-black" />
+            </button>
+            <button 
+              onClick={() => {
+                localStorage.removeItem('vss_dev_login');
+                supabase.auth.signOut();
+                navigate('/login');
+              }}
+              className="px-6 py-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white font-display text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 group"
+            >
+              <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <span>Logout</span>
             </button>
           </div>
         </header>
