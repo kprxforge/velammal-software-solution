@@ -47,7 +47,7 @@ export default function NeuralInsights() {
       // Project Requests
       const { count: projectCount } = await supabase
         .from('project_requests')
-        .select('*', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true });
 
       // Total Revenue (Verified Internships + Verified Transactions)
       const { data: verifiedInt } = await supabase
