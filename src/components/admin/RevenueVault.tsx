@@ -17,7 +17,11 @@ export default function RevenueVault() {
   useEffect(() => {
     const fetchAllPayments = async () => {
       const { data: intData } = await supabase.from('internship_applications').select('*').order('createdAt', { ascending: false });
-      const { data: prjData } = await supabase.from('project_requests').select('*').order('createdAt', { ascending: false });
+      const { data: prjData, error: prjError } = await supabase
+        .from('project_requests')
+        .select('id,userId,clientName,email,projectName,description,budget,status,paymentStatus,paymentScreenshotUrl,type,createdAt')
+        .order('createdAt', { ascending: false });
+      if (prjError) console.error('Failed to fetch project_requests:', prjError.message);
       const { data: txData } = await supabase.from('transactions').select('*').order('createdAt', { ascending: false });
 
       const combined = [

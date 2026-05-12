@@ -50,7 +50,11 @@ export default function Projects() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) return;
       
-      const { data: appsData } = await supabase.from('project_requests').select('*').eq('userId', userData.user.id);
+      const { data: appsData, error } = await supabase
+        .from('project_requests')
+        .select('id,userId,clientName,email,projectName,description,budget,status,paymentStatus,paymentScreenshotUrl,type,createdAt')
+        .eq('userId', userData.user.id);
+      if (error) console.error('Failed to fetch project requests:', error.message);
       if (appsData) setApplications(appsData);
 
       const { data: txData } = await supabase.from('transactions').select('*').eq('sellerId', userData.user.id);
