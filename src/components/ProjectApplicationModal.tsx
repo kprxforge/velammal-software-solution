@@ -87,10 +87,10 @@ export default function ProjectApplicationModal({ isOpen, onClose, project }: Pr
     
     try {
       const { error } = await supabase.from('project_requests').insert([{
-        user_id: userData.user?.id || 'guest',
-        client_name: formData.fullName,
+        userId: userData.user?.id || 'guest',
+        clientName: formData.fullName,
         email: formData.email,
-        project_name: project?.title || 'Project Inquiry',
+        projectName: project?.title || 'Project Inquiry',
         description: formData.description || `Inquiry for project: ${project?.title}`,
         type: 'application',
         status: 'pending',

@@ -19,7 +19,7 @@ export default function RevenueVault() {
       const { data: intData } = await supabase.from('internship_applications').select('*').order('createdAt', { ascending: false });
       const { data: prjData, error: prjError } = await supabase
         .from('project_requests')
-        .select('id,user_id,client_name,email,project_name,description,budget,status,payment_status,payment_screenshot_url,type,created_at')
+        .select('id,userId,clientName,email,projectName,description,budget,status,paymentStatus,paymentScreenshotUrl,type,createdAt')
         .order('createdAt', { ascending: false });
       if (prjError) console.error('Failed to fetch project_requests:', prjError.message);
       const { data: txData } = await supabase.from('transactions').select('*').order('createdAt', { ascending: false });
