@@ -19,7 +19,7 @@ export default function ProjectRequestOps() {
     const fetchRequests = async () => {
       const { data, error } = await supabase
         .from('project_requests')
-        .select('id,userId,clientName,email,projectName,description,budget,status,paymentStatus,paymentScreenshotUrl,type,createdAt')
+        .select('id,user_id,client_name,email,project_name,description,budget,status,payment_status,payment_screenshot_url,type,created_at')
         .order('createdAt', { ascending: false });
       
       if (!error && data) {

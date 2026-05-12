@@ -52,7 +52,7 @@ export default function Projects() {
       
       const { data: appsData, error } = await supabase
         .from('project_requests')
-        .select('id,userId,clientName,email,projectName,description,budget,status,paymentStatus,paymentScreenshotUrl,type,createdAt')
+        .select('id,user_id,client_name,email,project_name,description,budget,status,payment_status,payment_screenshot_url,type,created_at')
         .eq('userId', userData.user.id);
       if (error) console.error('Failed to fetch project requests:', error.message);
       if (appsData) setApplications(appsData);
