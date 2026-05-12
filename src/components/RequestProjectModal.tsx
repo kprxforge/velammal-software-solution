@@ -70,14 +70,14 @@ export default function RequestProjectModal({ isOpen, onClose }: RequestProjectM
       const userId = userData.user?.id || 'guest';
       
       const { error } = await supabase.from('project_requests').insert([{
-        full_name: form.name,
-        phone: form.phone,
+        userId: userId,
+        clientName: form.name,
         email: form.email,
-        organization: form.collegeOrCompany,
-        city: form.city,
-        project_type: form.projectType,
+        projectName: form.projectType,
         description: form.description,
-        features: form.features,
+        budget: form.collegeOrCompany,
+        type: 'custom',
+        status: 'pending',
       }]);
       
       if (error) {
