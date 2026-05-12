@@ -24,8 +24,24 @@ export default function ProjectForge() {
 
   useEffect(() => {
     const fetchProjects = async () => {
-      const { data } = await supabase.from('projects').select('*').order('createdAt', { ascending: false });
-      if (data) setProjects(data);
+      let result = await supabase.from('projects').select('*').order('createdat', { ascending: false });
+      if (result.error) {
+        result = await supabase.from('projects').select('*').order('createdAt', { ascending: false });
+      }
+
+      if (result.data) {
+        const normalized = result.data.map((prj: any) => ({
+          ...prj,
+          imageUrl: prj.imageurl || prj.imageUrl || '',
+          createdAt: prj.createdat || prj.createdAt,
+          tech: Array.isArray(prj.tech)
+            ? prj.tech
+            : typeof prj.tech === 'string'
+            ? prj.tech.split(',').map((t: string) => t.trim()).filter(Boolean)
+            : []
+        }));
+        setProjects(normalized);
+      }
     };
 
     fetchProjects();
@@ -42,8 +58,13 @@ export default function ProjectForge() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = {
-      ...formData,
+      title: formData.title,
+      description: formData.description,
+      price: formData.price,
+      imageurl: formData.imageUrl,
       tech: typeof formData.tech === 'string' ? formData.tech.split(',').map(t => t.trim()).filter(t => t) : formData.tech,
+      active: formData.active,
+      featured: formData.featured,
     };
 
     try {
@@ -209,7 +230,7 @@ export default function ProjectForge() {
                       title: prj.title,
                       description: prj.description,
                       price: prj.price,
-                      imageUrl: prj.imageUrl,
+                      imageUrl: prj.imageUrl || prj.imageurl || '',
                       tech: prj.tech.join(', '),
                       active: prj.active,
                       featured: prj.featured || false

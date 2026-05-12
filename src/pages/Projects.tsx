@@ -23,13 +23,49 @@ export default function Projects() {
 
   useEffect(() => {
     const fetchProjects = async () => {
-      const { data } = await supabase.from('projects').select('*').order('createdAt', { ascending: false });
+      let result = await supabase.from('projects').select('*').order('createdat', { ascending: false });
+      if (result.error) {
+        result = await supabase.from('projects').select('*').order('createdAt', { ascending: false });
+      }
+
+      const data = result.data;
       if (data) {
-        setProjects(data.filter((p: any) => p.active));
+        const normalizedProjects = data.map((p: any) => {
+          const categoryMatch = typeof p.description === 'string'
+            ? p.description.match(/Category:\s*(.+)/i)
+            : null;
+          const normalizedTech = Array.isArray(p.tech)
+            ? p.tech
+            : typeof p.tech === 'string'
+            ? p.tech.split(',').map((t: string) => t.trim()).filter(Boolean)
+            : [];
+
+          return {
+            ...p,
+            imageUrl: p.imageurl || p.imageUrl || p.image || 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2832&auto=format&fit=crop',
+            image: p.imageurl || p.imageUrl || p.image || 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2832&auto=format&fit=crop',
+            createdAt: p.createdat || p.createdAt,
+            userId: p.userid || p.userId,
+            category: p.category || categoryMatch?.[1]?.split('\n')[0]?.trim() || 'General',
+            tech: normalizedTech,
+            completionTime: p.completiontime || p.completionTime || 'Flexible',
+          };
+        });
+
+        setProjects(normalizedProjects.filter((p: any) => p.active !== false));
         
         supabase.auth.getUser().then(({ data: userData }) => {
           if (userData.user) {
-            setMyUploadedProjects(data.filter((p: any) => p.userId === userData.user?.id));
+            const signedInEmail = (userData.user.email || '').toLowerCase();
+            setMyUploadedProjects(normalizedProjects.filter((p: any) => {
+              const hasUserIdMatch = p.userId === userData.user?.id;
+              const hasEmailMarker = signedInEmail && typeof p.description === 'string'
+                ? p.description.toLowerCase().includes(`uploaderemail: ${signedInEmail}`)
+                : false;
+              return hasUserIdMatch || hasEmailMarker;
+            }));
+          } else {
+            setMyUploadedProjects([]);
           }
         });
       }
@@ -63,8 +99,14 @@ export default function Projects() {
         })));
       }
 
-      const { data: txData } = await supabase.from('transactions').select('*').eq('sellerId', userData.user.id);
-      if (txData) setCreatorSales(txData);
+      const { data: txData } = await supabase.from('transactions').select('*');
+      if (txData) {
+        const creatorTx = txData.filter((tx: any) => {
+          const sellerId = tx.sellerid || tx.sellerId;
+          return sellerId === userData.user.id;
+        });
+        setCreatorSales(creatorTx);
+      }
     };
     
     fetchUserData();

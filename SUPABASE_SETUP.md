@@ -75,23 +75,23 @@ CREATE TABLE projects (
   title TEXT NOT NULL,
   description TEXT,
   price DECIMAL,
-  imageUrl TEXT,
+  imageurl TEXT,
   tech TEXT[],
   active BOOLEAN DEFAULT true,
   featured BOOLEAN DEFAULT false,
-  createdAt TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+  createdat TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
 -- 5. Transactions (Marketplace Sales)
 CREATE TABLE transactions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  projectId UUID REFERENCES projects(id),
-  projectTitle TEXT,
+  projectid UUID REFERENCES projects(id),
+  projecttitle TEXT,
   price DECIMAL,
-  buyerEmail TEXT,
+  buyeremail TEXT,
   status TEXT DEFAULT 'pending',
-  paymentScreenshotUrl TEXT,
-  createdAt TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+  paymentscreenshoturl TEXT,
+  createdat TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
 -- 6. System Configuration

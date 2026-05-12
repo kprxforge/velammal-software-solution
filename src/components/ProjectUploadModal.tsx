@@ -48,33 +48,57 @@ export default function ProjectUploadModal({ isOpen, onClose }: ProjectUploadMod
     return publicUrl;
   };
 
+  const handleProceedToStepTwo = () => {
+    if (!formData.title.trim() || !formData.description.trim() || !formData.tech.trim()) {
+      toast.error('Please complete title, description, and tech stack before continuing.');
+      return;
+    }
+    setStep(2);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.title.trim() || !formData.description.trim() || !formData.tech.trim()) {
+      toast.error('Please complete all required fields.');
+      setStep(1);
+      return;
+    }
     
+    const isDev = localStorage.getItem('vss_dev_login') === 'true';
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
+    if (!userData.user && !isDev) {
+      toast.error('You must be logged in to upload a project.');
+      return;
+    }
     
     setIsUploading(true);
     try {
-      const imageUrl = await uploadScreenshot(userData.user.id);
+      const uploaderId = userData.user?.id || crypto.randomUUID();
+      const uploaderEmail = userData.user?.email || 'unknown@local';
+      const imageUrl = await uploadScreenshot(uploaderId);
+      const techStack = formData.tech
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean);
       
       const projectData = {
-        user_name: userData.user.email || 'Unknown',
-        project_title: formData.title,
-        category: formData.category,
-        description: formData.description,
-        github_link: formData.githubLink || 'Not Provided',
-        demo_link: formData.demoLink || imageUrl || 'Not Provided',
+        title: formData.title,
+        description: `${formData.description}\n\nCategory: ${formData.category}\nOwnership: ${formData.teamType}\nUploaderEmail: ${uploaderEmail}\n${formData.githubLink ? `GitHub: ${formData.githubLink}` : ''}\n${formData.demoLink ? `Demo: ${formData.demoLink}` : ''}`.trim(),
+        price: formData.expectedPrice,
+        imageurl: imageUrl,
+        tech: techStack,
+        active: false,
+        featured: false,
       };
 
-      const { error } = await supabase.from('project_uploads').insert([projectData]);
+      const { error } = await supabase.from('projects').insert([projectData]);
       if (error) {
          console.error("Supabase Insert Error:", error);
          toast.error(`Failed to submit project: ${error.message}`);
          throw error;
       }
       
-      toast.success("Project uploaded successfully!");
+      toast.success("Project submitted! It is now in admin review queue.");
       setIsSubmitted(true);
     } catch (error: any) {
       console.error("Error submitting project:", error);
@@ -209,11 +233,11 @@ export default function ProjectUploadModal({ isOpen, onClose }: ProjectUploadMod
                        />
                      </div>
 
-                     <button 
-                       type="button" 
-                       onClick={() => setStep(2)}
-                       className="w-full py-5 rounded-2xl bg-purple-500 hover:bg-purple-400 text-black font-display text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all relative group overflow-hidden"
-                     >
+                      <button 
+                        type="button" 
+                        onClick={handleProceedToStepTwo}
+                        className="w-full py-5 rounded-2xl bg-purple-500 hover:bg-purple-400 text-black font-display text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all relative group overflow-hidden"
+                      >
                        <span className="relative z-10">Proceed to Link Matrix</span>
                        <ChevronRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform" />
                      </button>

@@ -20,14 +20,10 @@ export default function ProjectModal({ isOpen, onClose, project }: ProjectModalP
     setIsProcessing(true);
     try {
       const { error } = await supabase.from('transactions').insert([{
-        projectId: project.id,
-        projectTitle: project.title,
-        buyerId: userData.user.id,
-        buyerEmail: userData.user.email,
-        sellerId: project.userId || 'admin',
+        projectid: project.id,
+        projecttitle: project.title,
+        buyeremail: userData.user.email,
         price: project.price,
-        platformFee: project.price * 0.20,
-        sellerEarnings: project.price * 0.80,
         status: 'pending_verification'
       }]);
       if (error) throw error;

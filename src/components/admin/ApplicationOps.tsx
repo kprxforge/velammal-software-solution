@@ -40,8 +40,8 @@ export default function ApplicationOps() {
       // 2. Custom Project Requests
       const projData = await fetchTable('project_requests');
 
-      // 3. Project Uploads
-      const uploadData = await fetchTable('project_uploads');
+      // 3. Project Uploads (stored in projects table)
+      const uploadData = await fetchTable('projects');
 
       const interList = interData.map(d => ({
         ...d,
@@ -65,11 +65,11 @@ export default function ApplicationOps() {
       const uploadList = uploadData.map(d => ({
         ...d,
         type: 'project_upload',
-        status: d.status || 'Pending Review',
-        displayName: d.user_name || d.userEmail || 'Unknown',
-        displayTitle: d.project_title || d.title || 'Project Upload',
-        displayContact: d.user_name || d.userEmail || '',
-        displaySub: d.category || '',
+        status: d.active ? 'accepted' : 'Pending Review',
+        displayName: 'Marketplace Creator',
+        displayTitle: d.title || 'Project Upload',
+        displayContact: '',
+        displaySub: Array.isArray(d.tech) ? d.tech.join(', ') : '',
       }));
 
       const combined = [...interList, ...projList, ...uploadList].sort((a, b) => {
@@ -93,7 +93,7 @@ export default function ApplicationOps() {
       .subscribe();
 
     const uploadSub = supabase.channel('admin_proj_uploads')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'project_uploads' }, fetchApplications)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, fetchApplications)
       .subscribe();
 
     return () => {
@@ -112,9 +112,15 @@ export default function ApplicationOps() {
         project_upload: 'projects',
       };
       const table = tableMap[type] || 'internship_applications';
+      const effectiveStatus = type === 'project_upload' && status === 'rejected'
+        ? 'Pending Review'
+        : status;
+      const updatePayload = type === 'project_upload'
+        ? { active: status === 'accepted' }
+        : { status };
 
-      setApplications(prev => prev.map(a => a.id === appId ? { ...a, status } : a));
-      const { error } = await supabase.from(table).update({ status }).eq('id', appId);
+      setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: effectiveStatus } : a));
+      const { error } = await supabase.from(table).update(updatePayload).eq('id', appId);
       if (error) throw error;
 
       if (status === 'accepted') {
