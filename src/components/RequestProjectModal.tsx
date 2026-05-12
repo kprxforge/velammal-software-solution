@@ -67,13 +67,13 @@ export default function RequestProjectModal({ isOpen, onClose }: RequestProjectM
     setIsSubmitting(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id || 'guest';
+      const requestUserId = userData.user?.id || crypto.randomUUID();
       
       const { error } = await supabase.from('project_requests').insert([{
-        userId: userId,
-        clientName: form.name,
+        userid: requestUserId,
+        clientname: form.name,
         email: form.email,
-        projectName: form.projectType,
+        projectname: form.projectType,
         description: form.description,
         budget: form.collegeOrCompany,
         type: 'custom',
@@ -84,13 +84,12 @@ export default function RequestProjectModal({ isOpen, onClose }: RequestProjectM
         console.error("Supabase Insert Error:", error);
         toast.error(`Failed to request project: ${error.message}`);
         throw error;
-      } else {
-        toast.success("Project request submitted successfully!");
       }
-    } catch (error) {
-      console.error("Database save failed (likely permissions), continuing to success screen:", error);
-    } finally {
+      toast.success("Project request submitted successfully!");
       setSubmitted(true);
+    } catch (error) {
+      console.error("Database save failed:", error);
+    } finally {
       setIsSubmitting(false);
     }
   };

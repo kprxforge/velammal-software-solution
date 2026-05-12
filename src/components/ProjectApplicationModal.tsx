@@ -83,18 +83,19 @@ export default function ProjectApplicationModal({ isOpen, onClose, project }: Pr
     }
     setIsSubmitting(true);
     
-    const newId = `PRJ-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const fallbackId = `PRJ-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const requestUserId = userData.user?.id || (isDev ? crypto.randomUUID() : null);
     
     try {
-      const { error } = await supabase.from('project_requests').insert([{
-        userId: userData.user?.id || 'guest',
-        clientName: formData.fullName,
+      const { data: insertedRequest, error } = await supabase.from('project_requests').insert([{
+        userid: requestUserId,
+        clientname: formData.fullName,
         email: formData.email,
-        projectName: project?.title || 'Project Inquiry',
+        projectname: project?.title || 'Project Inquiry',
         description: formData.description || `Inquiry for project: ${project?.title}`,
         type: 'application',
         status: 'pending',
-      }]);
+      }]).select('id').single();
       
       if (error) {
         console.error("Supabase Insert Error:", error);
@@ -102,7 +103,7 @@ export default function ProjectApplicationModal({ isOpen, onClose, project }: Pr
         throw error;
       }
       toast.success("Application submitted successfully!");
-      setApplicationId(newId);
+      setApplicationId(insertedRequest?.id || fallbackId);
       setShowPayment(true);
     } catch (error: any) {
       console.error(error);

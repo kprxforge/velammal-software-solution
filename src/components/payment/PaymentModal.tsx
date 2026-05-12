@@ -72,12 +72,12 @@ export default function PaymentModal({ isOpen, onClose, applicationId, applicati
         .getPublicUrl(filePath);
 
       const table = applicationType === 'internship' ? 'internship_applications' : 'project_requests';
+      const updatePayload = applicationType === 'internship'
+        ? { paymentScreenshotUrl: publicUrl, paymentStatus: 'pending' }
+        : { paymentscreenshoturl: publicUrl, paymentstatus: 'pending' };
       const { error: updateError } = await supabase
         .from(table)
-        .update({
-          paymentScreenshotUrl: publicUrl,
-          paymentStatus: 'pending'
-        })
+        .update(updatePayload)
         .eq('id', applicationId);
 
       if (updateError) throw updateError;

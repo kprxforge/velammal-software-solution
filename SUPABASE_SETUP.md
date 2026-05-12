@@ -52,19 +52,21 @@ CREATE TABLE internship_applications (
 );
 
 -- 3. Project Requests (Custom & Applications)
+-- NOTE: These columns are intentionally lowercase in queries.
+-- If you create camelCase names without double quotes in PostgreSQL, they are stored as lowercase.
 CREATE TABLE project_requests (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  userId UUID NOT NULL,
-  clientName TEXT NOT NULL,
+  userid UUID NOT NULL,
+  clientname TEXT NOT NULL,
   email TEXT NOT NULL,
-  projectName TEXT,
+  projectname TEXT,
   description TEXT,
   budget TEXT,
   status TEXT DEFAULT 'pending',
-  paymentStatus TEXT DEFAULT 'none', -- none, pending, verified
-  paymentScreenshotUrl TEXT,
+  paymentstatus TEXT DEFAULT 'none', -- none, pending, verified
+  paymentscreenshoturl TEXT,
   type TEXT DEFAULT 'custom', -- custom, application
-  createdAt TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+  createdat TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
 -- 4. Marketplace Projects

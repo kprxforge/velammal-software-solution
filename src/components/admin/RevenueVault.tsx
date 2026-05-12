@@ -19,16 +19,28 @@ export default function RevenueVault() {
       const { data: intData } = await supabase.from('internship_applications').select('*').order('createdAt', { ascending: false });
       const { data: prjData, error: prjError } = await supabase
         .from('project_requests')
-        .select('id,userId,clientName,email,projectName,description,budget,status,paymentStatus,paymentScreenshotUrl,type,createdAt')
-        .order('createdAt', { ascending: false });
+        .select('id,userid,clientname,email,projectname,description,budget,status,paymentstatus,paymentscreenshoturl,type,createdat')
+        .order('createdat', { ascending: false });
       if (prjError) console.error('Failed to fetch project_requests:', prjError.message);
       const { data: txData } = await supabase.from('transactions').select('*').order('createdAt', { ascending: false });
 
       const combined = [
         ...(intData || []).map(d => ({ ...d, type: 'internship' })),
-        ...(prjData || []).map(d => ({ ...d, type: 'project' })),
+        ...(prjData || []).map(d => ({
+          ...d,
+          type: 'project',
+          fullName: d.clientname || 'Anonymous Identity',
+          projectTitle: d.projectname || 'Special Request',
+          paymentStatus: d.paymentstatus || 'none',
+          paymentScreenshotUrl: d.paymentscreenshoturl || '',
+          createdAt: d.createdat
+        })),
         ...(txData || []).map(d => ({ ...d, type: 'marketplace_sale' }))
-      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      ].sort((a, b) => {
+        const dateA = a.createdAt || a.created_at || a.createdat || 0;
+        const dateB = b.createdAt || b.created_at || b.createdat || 0;
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+      });
 
       setPayments(combined);
     };
@@ -49,7 +61,11 @@ export default function RevenueVault() {
   const updatePaymentStatus = async (id: string, type: string, status: string) => {
     const table = type === 'internship' ? 'internship_applications' : 
                   type === 'project' ? 'project_requests' : 'transactions';
-    const statusField = type === 'marketplace_sale' ? 'status' : 'paymentStatus';
+    const statusField = type === 'marketplace_sale'
+      ? 'status'
+      : type === 'project'
+      ? 'paymentstatus'
+      : 'paymentStatus';
     try {
       const { error } = await supabase
         .from(table)
@@ -70,7 +86,7 @@ export default function RevenueVault() {
     const matchesSearch = pay.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           pay.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           pay.buyerEmail?.toLowerCase().includes(searchTerm.toLowerCase());
-    const payStatus = pay.paymentStatus || pay.status;
+    const payStatus = pay.paymentStatus || pay.paymentstatus || pay.status;
     const matchesStatus = filterStatus === 'all' || payStatus === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -112,13 +128,13 @@ export default function RevenueVault() {
         <div className="glass rounded-[2rem] p-8 border border-white/5 bg-gradient-to-br from-emerald-400/5 to-transparent">
           <p className="font-display text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">Verified Revenue</p>
           <h3 className="font-display text-4xl font-bold text-white tracking-tighter">
-            ₹{payments.filter(p => (p.paymentStatus || p.status) === 'verified').reduce((acc, curr) => acc + (curr.internshipFee || curr.price || 0), 0).toLocaleString()}
+            ₹{payments.filter(p => (p.paymentStatus || p.paymentstatus || p.status) === 'verified').reduce((acc, curr) => acc + (curr.internshipFee || curr.price || 0), 0).toLocaleString()}
           </h3>
         </div>
         <div className="glass rounded-[2rem] p-8 border border-white/5 bg-gradient-to-br from-amber-400/5 to-transparent">
           <p className="font-display text-[10px] font-black text-amber-400 uppercase tracking-widest mb-2">Awaiting Review</p>
           <h3 className="font-display text-4xl font-bold text-white tracking-tighter">
-            {payments.filter(p => (p.paymentStatus || p.status) === 'pending' || (p.paymentStatus || p.status) === 'pending_verification').length}
+            {payments.filter(p => (p.paymentStatus || p.paymentstatus || p.status) === 'pending' || (p.paymentStatus || p.paymentstatus || p.status) === 'pending_verification').length}
           </h3>
         </div>
         <div className="glass rounded-[2rem] p-8 border border-white/5 bg-gradient-to-br from-cyan-400/5 to-transparent">
@@ -164,12 +180,12 @@ export default function RevenueVault() {
                   <td className="px-8 py-6">
                     <span className={cn(
                       "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border",
-                      (pay.paymentStatus || pay.status) === 'verified' ? "text-emerald-400 border-emerald-400/20 bg-emerald-400/5 shadow-[0_0_10px_#10b98120]" :
-                      (pay.paymentStatus || pay.status) === 'rejected' ? "text-red-400 border-red-400/20 bg-red-400/5 shadow-[0_0_10px_#ef444420]" :
-                      (pay.paymentStatus || pay.status) === 'unpaid' ? "text-white/40 border-white/10 bg-white/5" :
+                      (pay.paymentStatus || pay.paymentstatus || pay.status) === 'verified' ? "text-emerald-400 border-emerald-400/20 bg-emerald-400/5 shadow-[0_0_10px_#10b98120]" :
+                      (pay.paymentStatus || pay.paymentstatus || pay.status) === 'rejected' ? "text-red-400 border-red-400/20 bg-red-400/5 shadow-[0_0_10px_#ef444420]" :
+                      (pay.paymentStatus || pay.paymentstatus || pay.status) === 'unpaid' ? "text-white/40 border-white/10 bg-white/5" :
                       "text-amber-400 border-amber-400/20 bg-amber-400/5 shadow-[0_0_10px_#f59e0b20]"
                     )}>
-                      {pay.paymentStatus || pay.status}
+                      {pay.paymentStatus || pay.paymentstatus || pay.status}
                     </span>
                   </td>
                   <td className="px-8 py-6 text-right">

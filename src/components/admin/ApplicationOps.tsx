@@ -23,8 +23,12 @@ export default function ApplicationOps() {
           console.warn(`[${table}] created_at failed, trying createdAt:`, res.error.message);
           res = await supabase.from(table).select('*').order('createdAt', { ascending: false });
           if (res.error) {
-            console.warn(`[${table}] createdAt failed, trying unordered:`, res.error.message);
-            res = await supabase.from(table).select('*');
+            console.warn(`[${table}] createdAt failed, trying createdat:`, res.error.message);
+            res = await supabase.from(table).select('*').order('createdat', { ascending: false });
+            if (res.error) {
+              console.warn(`[${table}] createdat failed, trying unordered:`, res.error.message);
+              res = await supabase.from(table).select('*');
+            }
           }
         }
         return res.data || [];
@@ -52,10 +56,10 @@ export default function ApplicationOps() {
         ...d,
         type: 'project_request',
         status: d.status || 'Pending Review',
-        displayName: d.full_name || d.fullName || 'Unknown',
-        displayTitle: d.project_type || d.projectType || 'Custom Project',
+        displayName: d.clientname || d.clientName || d.full_name || d.fullName || 'Unknown',
+        displayTitle: d.projectname || d.projectName || d.project_type || d.projectType || 'Custom Project',
         displayContact: d.phone || d.email || '',
-        displaySub: d.city || d.organization || d.collegeOrCompany || '',
+        displaySub: d.budget || d.city || d.organization || d.collegeOrCompany || '',
       }));
 
       const uploadList = uploadData.map(d => ({
@@ -69,8 +73,8 @@ export default function ApplicationOps() {
       }));
 
       const combined = [...interList, ...projList, ...uploadList].sort((a, b) => {
-        const timeA = new Date(a.created_at || a.createdAt || 0).getTime();
-        const timeB = new Date(b.created_at || b.createdAt || 0).getTime();
+        const timeA = new Date(a.created_at || a.createdAt || a.createdat || 0).getTime();
+        const timeB = new Date(b.created_at || b.createdAt || b.createdat || 0).getTime();
         return timeB - timeA;
       });
 
@@ -244,7 +248,7 @@ export default function ApplicationOps() {
                     <p className="text-white/20 font-sans text-xs mt-1">{app.displaySub}</p>
                   )}
                   <p className="text-white/20 font-mono text-[10px] mt-1">
-                    {app.created_at || app.createdAt ? new Date(app.created_at || app.createdAt).toLocaleString() : 'N/A'}
+                    {app.created_at || app.createdAt || app.createdat ? new Date(app.created_at || app.createdAt || app.createdat).toLocaleString() : 'N/A'}
                   </p>
                 </div>
               </div>

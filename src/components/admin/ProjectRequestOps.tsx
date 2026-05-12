@@ -19,8 +19,8 @@ export default function ProjectRequestOps() {
     const fetchRequests = async () => {
       const { data, error } = await supabase
         .from('project_requests')
-        .select('id,userId,clientName,email,projectName,description,budget,status,paymentStatus,paymentScreenshotUrl,type,createdAt')
-        .order('createdAt', { ascending: false });
+        .select('id,userid,clientname,email,projectname,description,budget,status,paymentstatus,paymentscreenshoturl,type,createdat')
+        .order('createdat', { ascending: false });
       
       if (!error && data) {
         setRequests(data);
@@ -53,8 +53,8 @@ export default function ProjectRequestOps() {
 
   const filteredRequests = requests.filter(req => {
     const matchesSearch = 
-      req.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      req.projectType?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      req.clientname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      req.projectname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       req.description?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesFilter = filterStatus === 'all' || req.status === filterStatus;
@@ -87,9 +87,9 @@ export default function ProjectRequestOps() {
             className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-cyan-400/50 transition-all appearance-none cursor-pointer"
           >
             <option value="all">All Cycles</option>
-            <option value="Pending Review">Pending</option>
-            <option value="Accepted">Accepted</option>
-            <option value="Rejected">Rejected</option>
+            <option value="pending">Pending</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
           </select>
         </div>
       </div>
@@ -112,14 +112,14 @@ export default function ProjectRequestOps() {
                 <div className="lg:w-80 space-y-8">
                   <div className="flex items-center gap-6">
                     <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-cyan-400/20 to-purple-600/20 flex items-center justify-center border border-white/10 shadow-xl">
-                      <span className="font-display text-2xl font-black text-white">{req.fullName?.charAt(0)}</span>
+                      <span className="font-display text-2xl font-black text-white">{req.clientname?.charAt(0) || 'U'}</span>
                     </div>
                     <div>
-                      <h3 className="font-display text-2xl font-black text-white tracking-tight leading-none mb-2">{req.fullName}</h3>
+                      <h3 className="font-display text-2xl font-black text-white tracking-tight leading-none mb-2">{req.clientname || 'Unknown'}</h3>
                       <div className={cn(
                         "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border w-fit",
-                        req.status === 'Accepted' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-                        req.status === 'Pending Review' ? "bg-amber-500/10 border-amber-500/20 text-amber-400" :
+                        req.status === 'accepted' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                        req.status === 'pending' ? "bg-amber-500/10 border-amber-500/20 text-amber-400" :
                         "bg-red-500/10 border-red-500/20 text-red-400"
                       )}>
                         {req.status}
@@ -128,24 +128,14 @@ export default function ProjectRequestOps() {
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-white/5">
-                    <div className="flex items-center gap-4 text-white/40 hover:text-white transition-colors group/link">
-                      <Phone className="w-4 h-4" />
-                      <a href={`tel:${req.phone}`} className="font-mono text-sm">{req.phone}</a>
-                    </div>
                     <div className="flex items-center gap-4 text-white/40 hover:text-white transition-colors">
                       <Mail className="w-4 h-4" />
                       <span className="font-sans text-sm truncate">{req.email}</span>
                     </div>
-                    {req.collegeOrCompany && (
+                    {req.budget && (
                       <div className="flex items-center gap-4 text-white/40">
                         <Building2 className="w-4 h-4" />
-                        <span className="font-sans text-sm">{req.collegeOrCompany}</span>
-                      </div>
-                    )}
-                    {req.city && (
-                      <div className="flex items-center gap-4 text-white/40">
-                        <MapPin className="w-4 h-4" />
-                        <span className="font-sans text-sm">{req.city}</span>
+                        <span className="font-sans text-sm">{req.budget}</span>
                       </div>
                     )}
                   </div>
@@ -153,8 +143,8 @@ export default function ProjectRequestOps() {
                   <div className="flex gap-4 pt-4">
                     <button 
                       onClick={() => {
-                        const message = `Hello ${req.fullName}, this is Subramani from Velammal Software Solutions. I am contacting you regarding your project request for a ${req.projectType}.`;
-                        window.open(`https://wa.me/${req.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+                        const message = `Hello ${req.clientname || 'there'}, this is Velammal Software Solutions. We received your project request for ${req.projectname || 'a custom project'}. We will contact you via email at ${req.email}.`;
+                        window.open(`https://wa.me/918939117117?text=${encodeURIComponent(message)}`, '_blank');
                       }}
                       className="flex-1 py-4 rounded-2xl bg-[#07d98b]/10 border border-[#07d98b]/20 text-[#07d98b] font-display text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#07d98b] hover:text-black transition-all"
                     >
@@ -162,14 +152,14 @@ export default function ProjectRequestOps() {
                       WhatsApp
                     </button>
                     <button 
-                      onClick={() => updateStatus(req.id, 'Accepted')}
+                      onClick={() => updateStatus(req.id, 'accepted')}
                       className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:bg-emerald-500 hover:text-black hover:border-emerald-500 transition-all"
                       title="Accept Request"
                     >
                       <CheckCircle2 className="w-6 h-6" />
                     </button>
                     <button 
-                      onClick={() => updateStatus(req.id, 'Rejected')}
+                      onClick={() => updateStatus(req.id, 'rejected')}
                       className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:bg-red-500 hover:text-black hover:border-red-500 transition-all"
                       title="Reject Request"
                     >
@@ -186,11 +176,11 @@ export default function ProjectRequestOps() {
                         <Zap className="w-5 h-5 text-cyan-400" />
                         <span className="font-display text-[10px] font-black text-cyan-400 uppercase tracking-[0.3em]">Project Manifest</span>
                       </div>
-                      <h4 className="font-display text-4xl font-black text-white uppercase tracking-tight">{req.projectType}</h4>
+                      <h4 className="font-display text-4xl font-black text-white uppercase tracking-tight">{req.projectname || 'Custom Project'}</h4>
                     </div>
                     <div className="flex items-center gap-3 bg-white/5 px-6 py-3 rounded-2xl border border-white/5 text-white/30 font-mono text-xs">
                       <Clock className="w-4 h-4" />
-                      {req.createdAt ? new Date(req.createdAt).toLocaleString() : 'N/A'}
+                      {req.createdat ? new Date(req.createdat).toLocaleString() : 'N/A'}
                     </div>
                   </div>
 
@@ -203,19 +193,6 @@ export default function ProjectRequestOps() {
                     </div>
                   </div>
 
-                  {req.features && req.features.length > 0 && (
-                    <div className="space-y-6">
-                      <h5 className="font-display text-[10px] font-black text-white/30 uppercase tracking-[0.4em] ml-1">Features Needed</h5>
-                      <div className="flex flex-wrap gap-3">
-                        {req.features.map((feat: string) => (
-                          <div key={feat} className="px-6 py-3 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-3 group/feat hover:border-cyan-400/30 transition-all">
-                            <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
-                            <span className="font-display text-[10px] font-black text-white/60 uppercase tracking-widest">{feat}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </motion.div>

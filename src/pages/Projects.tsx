@@ -52,10 +52,16 @@ export default function Projects() {
       
       const { data: appsData, error } = await supabase
         .from('project_requests')
-        .select('id,userId,clientName,email,projectName,description,budget,status,paymentStatus,paymentScreenshotUrl,type,createdAt')
-        .eq('userId', userData.user.id);
+        .select('id,userid,clientname,email,projectname,description,budget,status,paymentstatus,paymentscreenshoturl,type,createdat')
+        .eq('userid', userData.user.id);
       if (error) console.error('Failed to fetch project requests:', error.message);
-      if (appsData) setApplications(appsData);
+      if (appsData) {
+        setApplications(appsData.map((app: any) => ({
+          ...app,
+          projectTitle: app.projectname || app.projectName,
+          createdAt: app.createdat || app.createdAt
+        })));
+      }
 
       const { data: txData } = await supabase.from('transactions').select('*').eq('sellerId', userData.user.id);
       if (txData) setCreatorSales(txData);
@@ -379,12 +385,12 @@ export default function Projects() {
                           </div>
 
                           <div className="flex flex-col sm:flex-row items-center gap-4">
-                             <div className={cn(
-                               "px-8 py-3 rounded-full font-display text-[11px] font-black uppercase tracking-widest shadow-xl",
-                               app.status === 'accepted' ? "bg-emerald-500 text-black" :
-                               app.status === 'Pending Review' ? "bg-blue-500 text-white" :
-                               "bg-red-500 text-white"
-                             )}>
+                              <div className={cn(
+                                "px-8 py-3 rounded-full font-display text-[11px] font-black uppercase tracking-widest shadow-xl",
+                                (app.status === 'accepted' || app.status === 'Accepted') ? "bg-emerald-500 text-black" :
+                                (app.status === 'pending' || app.status === 'Pending Review') ? "bg-blue-500 text-white" :
+                                "bg-red-500 text-white"
+                              )}>
                                {app.status}
                              </div>
                           </div>
@@ -418,4 +424,3 @@ export default function Projects() {
     </div>
   );
 }
-
